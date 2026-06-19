@@ -73,7 +73,7 @@ router.post("/add",protect, async (req, res) => {
 
       const thumbnail =
          `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-
+console.log(req.body);
       const course = await Course.create({
          title,
          videoUrl,
