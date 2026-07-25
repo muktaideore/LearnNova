@@ -19,12 +19,14 @@ router.post("/register", async (req, res) => {
    try {
 
       const { name, email, password } = req.body;
+      const normalizedEmail = email.trim().toLowerCase();
 
       const existingUser = await User.findOne({
-         email,
+         email: normalizedEmail,
       });
 
-      if (existingUser) {
+      // Block only if a VERIFIED account already exists
+      if (existingUser && existingUser.isVerified) {
          return res.status(400).json({
             message: "User already exists",
          });
@@ -39,18 +41,28 @@ router.post("/register", async (req, res) => {
          100000 + Math.random() * 900000
       ).toString();
 
-      await User.create({
-         name,
-         email,
-         password: hashedPassword,
-         otp,
-         otpExpiry:
-            Date.now() + 10 * 60 * 1000,
-         isVerified: false,
-      });
+      let user;
 
-      await sendEmail(
-         email,
+      if (existingUser && !existingUser.isVerified) {
+         // Unverified account already exists — refresh it instead of blocking
+         existingUser.name = name;
+         existingUser.password = hashedPassword;
+         existingUser.otp = otp;
+         existingUser.otpExpiry = Date.now() + 10 * 60 * 1000;
+         user = await existingUser.save();
+      } else {
+         user = await User.create({
+            name,
+            email: normalizedEmail,
+            password: hashedPassword,
+            otp,
+            otpExpiry: Date.now() + 10 * 60 * 1000,
+            isVerified: false,
+         });
+      }
+
+     const emailSent = await sendEmail(
+         normalizedEmail,
          "Learnova Email Verification",
          `
          <h2>Welcome to Learnova</h2>
@@ -60,8 +72,68 @@ router.post("/register", async (req, res) => {
          `
       );
 
+      if (!emailSent) {
+         return res.status(500).json({
+            message: "Account created but failed to send OTP email. Please try registering again to resend.",
+         });
+      }
+
       res.status(201).json({
          message: "OTP sent to your email",
+      });
+
+   } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+         message: "Server Error",
+      });
+
+   }
+});
+
+// RESEND OTP
+router.post("/resend-otp", async (req, res) => {
+   try {
+
+      const { email } = req.body;
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const user = await User.findOne({ email: normalizedEmail });
+
+      if (!user) {
+         return res.status(404).json({
+            message: "User not found",
+         });
+      }
+
+      if (user.isVerified) {
+         return res.status(400).json({
+            message: "Account already verified",
+         });
+      }
+
+      const otp = Math.floor(
+         100000 + Math.random() * 900000
+      ).toString();
+
+      user.otp = otp;
+      user.otpExpiry = Date.now() + 10 * 60 * 1000;
+      await user.save();
+
+      await sendEmail(
+         normalizedEmail,
+         "Learnova Email Verification",
+         `
+         <h2>Your new OTP</h2>
+         <h1>${otp}</h1>
+         <p>Valid for 10 minutes.</p>
+         `
+      );
+
+      res.status(200).json({
+         message: "OTP resent to your email",
       });
 
    } catch (error) {
