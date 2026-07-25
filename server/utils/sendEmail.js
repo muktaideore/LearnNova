@@ -77,7 +77,7 @@ const sendEmail = async (email, subject, message) => {
    try {
 
       console.log("=================================");
-      console.log("Sending Email via Resend...");
+      console.log("Sending Email via Resend to:", email);
 
       const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -93,7 +93,7 @@ const sendEmail = async (email, subject, message) => {
          return false;
       }
 
-      console.log("Email Sent, ID:", data.id);
+      console.log("Email Sent Successfully, ID:", data.id);
       return true;
 
    } catch (error) {
