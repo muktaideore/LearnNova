@@ -26,20 +26,32 @@ function Login() {
    "/auth/login",
    formData
 );
+localStorage.setItem("token", response.data.token);
 
-         localStorage.setItem(
-   "token",
-   response.data.token
+localStorage.setItem(
+   "user",
+   JSON.stringify(response.data.user)
 );
 
          alert(response.data.message);
 
          navigate("/dashboard");
       } catch (error) {
-         console.log(error);
 
-         alert(error.response.data.message);
-      }
+   console.log("FULL ERROR:", error);
+
+   console.log(
+      "SERVER RESPONSE:",
+      error.response?.data
+   );
+
+   alert(
+      error.response?.data?.message ||
+      "Login Failed"
+   );
+
+}
+
    };
 
    return (
@@ -81,9 +93,20 @@ function Login() {
                   Register
                </Link>
             </p>
+            <p className="mt-4 text-center">
+   <Link
+      to="/forgot-password"
+      className="text-blue-500"
+   >
+      Forgot Password?
+   </Link>
+</p>
          </form>
       </div>
    );
 }
 
 export default Login;
+
+
+

@@ -28,9 +28,8 @@ function Register() {
    formData
 ); 
 
-         alert(response.data.message);
-
-         navigate("/");
+         alert("OTP sent to your email");
+navigate("/verify-email");
       } catch (error) {
          console.log(error);
 
