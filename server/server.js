@@ -32,7 +32,13 @@ console.log("EMAIL_USER =", process.env.EMAIL_USER);
 console.log("EMAIL_PASS =", process.env.EMAIL_PASS);
 
 const app = express();
-app.use(cors());
+app.use(cors({
+   origin: [
+      "http://localhost:5173",
+      "https://learnnova-o8gz.onrender.com",
+   ],
+   credentials: true,
+}));
 
 app.use(express.json());
 app.use("/api/payment", paymentRoutes);
@@ -111,9 +117,18 @@ const server = http.createServer(app);
 // Socket.IO
 // ==============================
 
+// const io = new Server(server, {
+//    cors: {
+//       origin: "http://localhost:5173",
+//       methods: ["GET", "POST", "PUT", "DELETE"],
+//    },
+// });
 const io = new Server(server, {
    cors: {
-      origin: "http://localhost:5173",
+      origin: [
+         "http://localhost:5173",
+         "https://learnnova-o8gz.onrender.com",
+      ],
       methods: ["GET", "POST", "PUT", "DELETE"],
    },
 });
