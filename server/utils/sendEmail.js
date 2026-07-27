@@ -1,104 +1,36 @@
-// import nodemailer from "nodemailer";
-
-// const sendEmail = async (
-//    email,
-//    subject,
-//    message
-// ) => {
-//    try {
-
-//       console.log("=================================");
-//       console.log("Sending Email...");
-//       console.log("EMAIL_USER:", process.env.EMAIL_USER);
-//       console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
-
-//       // const transporter =
-//       //    nodemailer.createTransport({
-//       //       host: "smtp.gmail.com",
-//       //       port: 587,
-//       //       secure: false,
-//       //       auth: {
-//       //          user: process.env.EMAIL_USER,
-//       //          pass: process.env.EMAIL_PASS,
-//       //       },
-//       //    });
-//       const transporter =
-//    nodemailer.createTransport({
-//       host: "smtp.gmail.com",
-//       port: 587,
-//       secure: false,
-//       family: 4,
-//       auth: {
-//          user: process.env.EMAIL_USER,
-//          pass: process.env.EMAIL_PASS,
-//       },
-//    });
-
-//       await transporter.verify();
-
-//       console.log("SMTP Connection Successful");
-
-//       // const info =
-//       //    await transporter.sendMail({
-//       //       from: process.env.EMAIL_USER,
-//       //       to: email,
-//       //       subject,
-//       //       html: message,
-//       //    });
-//       const info = await transporter.sendMail({
-//    from: `"Learnify" <${process.env.EMAIL_USER}>`,
-//    to: email,
-//    subject,
-//    html: message,
-// });
-
-//       console.log("Email Sent");
-//       console.log(info.response);
-//       console.log("Message ID:", info.messageId);
-// console.log("Accepted:", info.accepted);
-// console.log("Rejected:", info.rejected);
-// console.log("Response:", info.response);
-//       return true;
-
-//    } catch (error) {
-
-//       console.log("EMAIL ERROR:");
-//       console.log(error);
-
-//       return false;
-//    }
-// };
-
-// export default sendEmail;
-
-import { Resend } from "resend";
+import * as brevo from "@getbrevo/brevo";
 
 const sendEmail = async (email, subject, message) => {
    try {
 
-      console.log("=================================");
-      console.log("Sending Email via Resend to:", email);
+      console.log("Sending Email via Brevo to:", email);
 
-      const resend = new Resend(process.env.RESEND_API_KEY);
+      const apiInstance = new brevo.TransactionalEmailsApi();
 
-      const { data, error } = await resend.emails.send({
-         from: "Learnova <onboarding@resend.dev>",
-         to: email,
-         subject,
-         html: message,
-      });
+      apiInstance.setApiKey(
+         brevo.TransactionalEmailsApiApiKeys.apiKey,
+         process.env.BREVO_API_KEY
+      );
 
-      if (error) {
-         console.log("EMAIL ERROR:", error);
-         return false;
-      }
+      const sendSmtpEmail = new brevo.SendSmtpEmail();
 
-      console.log("Email Sent Successfully, ID:", data.id);
+      sendSmtpEmail.sender = {
+         name: "Learnova",
+         email: "learnovadev66@gmail.com",
+      };
+
+      sendSmtpEmail.to = [{ email }];
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = message;
+
+      const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+      console.log("Email Sent Successfully:", response.body?.messageId);
       return true;
 
    } catch (error) {
 
-      console.log("EMAIL ERROR:", error);
+      console.log("EMAIL ERROR:", error?.response?.body || error);
       return false;
 
    }
